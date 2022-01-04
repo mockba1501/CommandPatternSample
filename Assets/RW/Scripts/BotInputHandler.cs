@@ -32,7 +32,44 @@ namespace RayWenderlich.CommandPatternInUnity
     using UnityEngine;
 
     public static class BotInputHandler
-    {
-       
+    {   
+        //delegate operator creates an anonymous method that can be coverted to a delegate type, the sinature of the anonymous method matched the requirement set by the ExecuteCallback delegate
+        private static readonly BotCommand MoveUp = new BotCommand(delegate (Bot bot) { bot.Move(CardinalDirection.Up); }, "moveUp");
+
+        private static readonly BotCommand MoveDown = new BotCommand(delegate (Bot bot) { bot.Move(CardinalDirection.Down); }, "moveDown");
+
+        private static readonly BotCommand MoveLeft = new BotCommand(delegate (Bot bot) { bot.Move(CardinalDirection.Left); }, "moveLeft");
+
+        private static readonly BotCommand MoveRight = new BotCommand(delegate (Bot bot) { bot.Move(CardinalDirection.Right); }, "moveRight");
+
+        private static readonly BotCommand Shoot = new BotCommand(delegate (Bot bot) { bot.Shoot(); }, "shoot");
+
+        //Returns a single command instance based on the key pressed by the user
+        public static BotCommand HandleInput()
+        {
+            if(Input.GetKeyDown(KeyCode.W))
+            {
+                return MoveUp;
+            }
+            else if (Input.GetKeyDown(KeyCode.S))
+            {
+                return MoveDown;
+            }
+            else if (Input.GetKeyDown(KeyCode.D))
+            {
+                return MoveRight;
+            }
+            else if (Input.GetKeyDown(KeyCode.A))
+            {
+                return MoveLeft;
+            }
+            else if (Input.GetKeyDown(KeyCode.F))
+            {
+                return Shoot;
+            }
+
+            //If any other key is pressed
+            return null;
+        }
     }
 }
