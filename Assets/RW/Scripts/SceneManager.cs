@@ -42,9 +42,84 @@ namespace RayWenderlich.CommandPatternInUnity
         private Bot bot = null;
         [SerializeField]
         private UIManager uiManager = null;
+        
         //1
+        //This list will store all the commands (To be provide an easy way to access for Do/Undo/Redo operations)
+        private List<BotCommand> botCommands = new List<BotCommand>();
+        
+        //Handles the command execution
+        private Coroutine executeRoutine;
 
-        //2
+        //2 Continuosly monitoring if the player presses the Enter Key to start executing the commands or waiting for Bot Commands via the keyboard
+        private void Update()
+        {
+            if(Input.GetKeyDown(KeyCode.Return))
+            {
+                ExecuteCommands();
+            }
+            else
+            {
+                CheckForBotCommands();
+            }
+        }
 
+        //3 uses the static method HnadleInput from the BotInputHandler to check if the user entered any inputs
+        private void CheckForBotCommands()
+        {
+            var botCommand = BotInputHandler.HandleInput();
+            //If a command exsits and the program is not executing any commands
+            if (botCommand != null && executeRoutine == null)
+            {
+                //Add the new commands to the List of commands
+                AddToCommands(botCommand);
+            }
+        }
+
+        //4 Adding a new reference to the returned command instance to botCommands
+        private void AddToCommands(BotCommand botCommand)
+        {
+            botCommands.Add(botCommand);
+            //5 Read the command name from the botCommand object and display it via the uiManager to the Game UI Elements
+            uiManager.InsertNewText(botCommand.ToString());
+        }
+
+        //6 Initiating a call to the coroutine function 
+        private void ExecuteCommands()
+        {
+            if(executeRoutine != null)
+            {
+                return;
+            }
+
+            executeRoutine = StartCoroutine(ExecuteCommandsRoutine());
+        }
+
+        //7 The coroutine function
+        private IEnumerator ExecuteCommandsRoutine()
+        {
+            Debug.Log("Executing...");
+
+            uiManager.ResetScrollToTop();
+
+            //8 loop over the commands inside the list 
+            for(int i = 0, count = botCommands.Count; i < count; i++)
+            {
+                var command = botCommands[i];
+                command.Execute(bot);
+
+                //9 After a command gets executed removes it from the top of the display
+                uiManager.RemoveFirstTextLine();
+                yield return new WaitForSeconds(CommandPauseTime);
+            }
+
+            //10 After executing all commands the list gets cleared
+            botCommands.Clear();
+
+            //The bot resets its position to the last check point crossed on
+            bot.ResetToLastCheckpoint();
+
+            //To allow the user to register new commands
+            executeRoutine = null;
+        }
     }
 }
