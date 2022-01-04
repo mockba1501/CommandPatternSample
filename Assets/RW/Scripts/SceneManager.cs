@@ -42,20 +42,31 @@ namespace RayWenderlich.CommandPatternInUnity
         private Bot bot = null;
         [SerializeField]
         private UIManager uiManager = null;
-        
+
         //1
         //This list will store all the commands (To be provide an easy way to access for Do/Undo/Redo operations)
         private List<BotCommand> botCommands = new List<BotCommand>();
-        
+
+        //To store the list of commands that have been undone
+        private Stack<BotCommand> undoStack = new Stack<BotCommand>();
+
         //Handles the command execution
         private Coroutine executeRoutine;
 
         //2 Continuosly monitoring if the player presses the Enter Key to start executing the commands or waiting for Bot Commands via the keyboard
         private void Update()
         {
-            if(Input.GetKeyDown(KeyCode.Return))
+            if (Input.GetKeyDown(KeyCode.Return))
             {
                 ExecuteCommands();
+            }
+            else if (Input.GetKeyDown(KeyCode.U))
+            {
+                UndoCommandEntry();
+            }
+            else if (Input.GetKeyDown(KeyCode.R))
+            {
+                RedoCommandEntry();
             }
             else
             {
@@ -71,8 +82,15 @@ namespace RayWenderlich.CommandPatternInUnity
             if (botCommand != null && executeRoutine == null)
             {
                 //Add the new commands to the List of commands
-                AddToCommands(botCommand);
+                AddNewCommands(botCommand);
             }
+        }
+
+        //This is to ensure that the undo stack is cleared when entering new commands 
+        private void AddNewCommands(BotCommand botCommand)
+        {
+            undoStack.Clear();
+            AddToCommands(botCommand);
         }
 
         //4 Adding a new reference to the returned command instance to botCommands
@@ -86,11 +104,12 @@ namespace RayWenderlich.CommandPatternInUnity
         //6 Initiating a call to the coroutine function 
         private void ExecuteCommands()
         {
-            if(executeRoutine != null)
+            if (executeRoutine != null)
             {
                 return;
             }
-
+            //To clear the stack before execution
+            undoStack.Clear();
             executeRoutine = StartCoroutine(ExecuteCommandsRoutine());
         }
 
@@ -102,7 +121,7 @@ namespace RayWenderlich.CommandPatternInUnity
             uiManager.ResetScrollToTop();
 
             //8 loop over the commands inside the list 
-            for(int i = 0, count = botCommands.Count; i < count; i++)
+            for (int i = 0, count = botCommands.Count; i < count; i++)
             {
                 var command = botCommands[i];
                 command.Execute(bot);
@@ -120,6 +139,38 @@ namespace RayWenderlich.CommandPatternInUnity
 
             //To allow the user to register new commands
             executeRoutine = null;
+        }
+
+        private void UndoCommandEntry()
+        {
+            // You can't undo a command while the game is running or if the list of commands is empty!
+            if (executeRoutine != null || botCommands.Count == 0)
+            {
+                return ;
+            }
+
+            // To push the last command from the list to the stack
+            undoStack.Push(botCommands[botCommands.Count - 1]);
+
+            //Remove the last command from the command list
+            botCommands.RemoveAt(botCommands.Count -1);
+
+            //To remove the last command entry from the display
+            uiManager.RemoveLastTextLine();
+        }
+
+        private void RedoCommandEntry()
+        {
+            //if the stack is empty there will be nothing to redo!
+            if(undoStack.Count == 0)
+            {
+                return;
+            }
+
+            //to remove it from the undo stack and re-add it to the original command list
+            var botCommand = undoStack.Pop();
+            AddToCommands(botCommand);
+
         }
     }
 }
