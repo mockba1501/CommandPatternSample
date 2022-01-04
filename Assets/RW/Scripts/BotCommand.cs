@@ -29,8 +29,29 @@
  */
 namespace RayWenderlich.CommandPatternInUnity
 {
+    
     public class BotCommand
     {
-       
+        //Declaring Command Name
+        private readonly string commandName;
+
+        //Consrtuctor accepts a function and a string (Help you setup the Command object's execute method and its name)
+        public BotCommand(ExecuteCallback executeMethod, string name)
+        {
+            Execute = executeMethod;
+            commandName = name;
+        }
+
+        //This function delegate defines the type of the encapsulated method. The encapsulated method will return void and accept an object of type Bot 
+        public delegate void ExecuteCallback(Bot bot);
+
+        //The Execute property will reference the encapsulated method. This is used to call the encapsulated method
+        public ExecuteCallback Execute { get; private set; }
+
+        //The method is overriden to return the commandName string. Useful for convenience and use in the UI
+        public override string ToString()
+        {
+            return commandName;
+        }
     }
 }
